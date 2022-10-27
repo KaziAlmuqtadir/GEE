@@ -1,12 +1,33 @@
-var geometry = ee.FeatureCollection("users/abir13/BD_admn/BGD_adm3")
+var aoi = ee.FeatureCollection("users/abir13/BD_admn/BGD_adm3")
             .filterMetadata('NAME_2', 'equals', 'Sylhet');
 // Add area and center it
 Map.addLayer(aoi, {},  'area');
-Map.centerObject(aoi, 12);
+Map.centerObject(aoi, 10);
 
 // Adjust date
 var start_date = "2021-01-01";
 var end_date = "2021-12-31";
+
+//// create function to adjust vis params 
+///  upper and lower limits
+
+var reduceMax = function(image){
+  return ee.data.computeValue(
+    ee.Number.parse(image.reduceRegion({
+      reducer: ee.Reducer.max(),
+      geometry: aoi,
+      scale: 1000
+  }).values().join()));
+};
+
+var reduceMin = function(image){
+  return ee.data.computeValue(
+    ee.Number.parse(image.reduceRegion({
+      reducer: ee.Reducer.min(),
+      geometry: aoi,
+      scale: 1000
+    }).values().join()));
+};
 
 // Add no2 layer
 var no2 = ee.ImageCollection('COPERNICUS/S5P/NRTI/L3_NO2')
@@ -15,13 +36,13 @@ var no2 = ee.ImageCollection('COPERNICUS/S5P/NRTI/L3_NO2')
   .mean()
   .clip(aoi);
 
+var no2Min = reduceMin(no2);
+var no2Max = reduceMax(no2);
 var band_vizNO2 = {
-  min: 0,
-  max: 0.0002,
+  min: no2Min,
+  max: no2Max,
   palette: ['blue', 'cyan', 'green', 'yellow', 'red']
 };
-
-Map.addLayer(no2, band_vizNO2, 'S5P N02');
 
 // Add CO layer
 var co = ee.ImageCollection('COPERNICUS/S5P/NRTI/L3_CO')
@@ -30,13 +51,13 @@ var co = ee.ImageCollection('COPERNICUS/S5P/NRTI/L3_CO')
   .mean()
   .clip(aoi);
 
+var coMin = reduceMin(co);
+var coMax = reduceMax(co);
 var band_vizCO = {
-  min: 0,
-  max: 0.05,
+  min: coMin,
+  max: coMax,
   palette: ['blue', 'cyan', 'green', 'yellow', 'red']
 };
-
-Map.addLayer(co, band_vizCO, 'S5P CO');
 
 // Add o3 layer
 var o3 = ee.ImageCollection('COPERNICUS/S5P/NRTI/L3_O3')
@@ -45,13 +66,13 @@ var o3 = ee.ImageCollection('COPERNICUS/S5P/NRTI/L3_O3')
   .mean()
   .clip(aoi);
 
+var o3Min = reduceMin(o3);
+var o3Max = reduceMax(o3);
 var band_vizO3 = {
-  min: 0.12,
-  max: 0.15,
+  min: o3Min,
+  max: o3Max,
   palette: ['blue', 'cyan', 'green', 'yellow', 'red']
 };
-
-Map.addLayer(o3, band_vizO3, 'S5P O3');
 
 // Add SO2 Layer
 var so2 = ee.ImageCollection('COPERNICUS/S5P/NRTI/L3_SO2')
@@ -60,13 +81,13 @@ var so2 = ee.ImageCollection('COPERNICUS/S5P/NRTI/L3_SO2')
   .mean()
   .clip(aoi);
 
+var so2Min = reduceMin(so2);
+var so2Max = reduceMax(so2);
 var band_vizSO2 = {
-  min: 0.0,
-  max: 0.0005,
+  min: so2Min,
+  max: so2Max,
   palette: ['blue', 'cyan', 'green', 'yellow', 'red']
 };
-
-Map.addLayer(so2, band_vizSO2, 'S5P SO2');
 
 
 // Add ch4 layer
@@ -76,13 +97,21 @@ var ch4 = ee.ImageCollection("COPERNICUS/S5P/OFFL/L3_CH4")
   .mean()
   .clip(aoi);
 
+var ch4Min = reduceMin(ch4);
+var ch4Max = reduceMax(ch4);
 var band_vizch4 = {
-  min: 0,
-  max: 0.0002,
+  min: ch4Min,
+  max: ch4Max,
   palette: ['blue', 'cyan', 'green', 'yellow', 'red']
 };
 
-Map.addLayer(ch4, band_vizch4, 'S5P CH4');
+// Add layers
+Map.addLayer(no2, band_vizNO2, 'S5P N02');
+Map.addLayer(co, band_vizCO, 'S5P CO', 0);
+Map.addLayer(o3, band_vizO3, 'S5P O3', 0);
+Map.addLayer(so2, band_vizSO2, 'S5P SO2', 0);
+Map.addLayer(ch4, band_vizch4, 'S5P CH4', 0);
+
 
 // Export images
 Export.image.toDrive({
