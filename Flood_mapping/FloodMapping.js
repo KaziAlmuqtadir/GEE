@@ -27,6 +27,8 @@ var sylhet = ee.FeatureCollection("users/Kazi_Almuqtadir13/BGD_adm3_upazilla")
 
     We will set start and end dates of a period BEFORE the flood.*/
 
+// Cloning 
+
 
 var before_start= '2022-06-01';
 var before_end='2022-06-08';
